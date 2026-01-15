@@ -7,7 +7,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors({
   origin: "*",
-  methods: ["POST"]
+  methods: ["GET", "POST"]  // Dodaj GET dla healthchecku
 }));
 app.use(express.json());
 
@@ -16,12 +16,21 @@ if (!process.env.OPENAI_API_KEY) {
   process.exit(1);
 }
 
-// Tworzymy klienta OpenAI (nowy sposób w paczce 4.x)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Endpoint POST /chat
+// Healthcheck
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+// Homepage
+app.get("/", (req, res) => {
+  res.send("GamModel Chatbot działa!");
+});
+
+// Chat endpoint
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
@@ -40,10 +49,7 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("GamModel Chatbot działa!");
-});
-
-app.listen(port, () => {
+// WAŻNE: 0.0.0.0 dla Railway
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server działa na porcie ${port}`);
 });
