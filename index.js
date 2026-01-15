@@ -1,40 +1,52 @@
-const express = require('express');
-const cors = require('cors');
-const { OpenAI } = require('openai');
+// index.js
+import express from "express";
+import cors from "cors";
+import { Configuration, OpenAIApi } from "openai";
 
 const app = express();
-app.use(cors());
+const port = process.env.PORT || 3000;
+
+app.use(cors({
+  origin: "*", // pozwala na połączenia z każdej domeny (na start)
+  methods: ["POST"]
+}));
 app.use(express.json());
 
-// Użycie portu podanego przez Railway lub 3000 lokalnie
-const PORT = process.env.PORT || 3000;
+// Sprawdź, czy klucz jest ustawiony
+if (!process.env.OPENAI_API_KEY) {
+  console.error("OPENAI_API_KEY nie ustawiony!");
+  process.exit(1);
+}
 
-// Inicjalizacja klienta OpenAI
-const openai = new OpenAI({
+// Konfiguracja OpenAI
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY
 });
+const openai = new OpenAIApi(configuration);
 
-// Endpoint POST do chatu
-app.post('/chat', async (req, res) => {
+// Endpoint POST /chat
+app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
-    if (!message) return res.status(400).json({ error: "Brak wiadomości" });
+    if (!message) return res.status(400).json({ error: "No message provided" });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: message }],
-      temperature: 0.7
     });
 
-    const reply = response.choices[0].message.content;
+    const reply = completion.data.choices[0].message.content;
     res.json({ reply });
-  } catch (error) {
-    console.error("Błąd GPT:", error);
-    res.status(500).json({ error: "Błąd serwera GPT" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-// Test endpoint
-app.get('/', (req, res) => res.send('GPT Chatbot działa!'));
+app.get("/", (req, res) => {
+  res.send("GamModel Chatbot is running");
+});
 
-app.listen(PORT, () => console.log(`Server działa na porcie ${PORT}`));
+app.listen(port, () => {
+  console.log(`Server działa na porcie ${port}`);
+});
