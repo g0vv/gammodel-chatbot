@@ -5,10 +5,17 @@ import OpenAI from "openai";
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ⭐ POPRAWIONY CORS - AKCEPTUJE GAMMODEL.PL
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"]
+  origin: ['https://www.gammodel.pl', 'https://gammodel.pl', 'http://localhost:3000'],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+// WAŻNE: Dodaj obsługę preflight OPTIONS
+app.options('*', cors());
+
 app.use(express.json());
 
 if (!process.env.OPENAI_API_KEY) {
@@ -20,7 +27,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// SYSTEM PROMPT - POPRAWIONY
 const SYSTEM_PROMPT = `Jesteś Kubą, asystentem wsparcia klienta sklepu GamModel.pl - sklepu z drewnianymi modelami mechanicznymi 3D.
 
 ## ⚠️ KRYTYCZNE: KONTEKST ROZMOWY
